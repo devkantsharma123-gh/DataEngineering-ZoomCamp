@@ -17,11 +17,11 @@ RUN uv sync --locked
 #specify anyting additional we want to install afre base image is installed
 #RUN pip install pandas pyarrow # We dont need to install these tools if using uv
 
-# here we are copying pipeline.py from our machine to docker root director (.)
-COPY pipeline.py .
+# here we are copying ingest_data.py from our machine to docker root director (.)
+COPY ingest_data.py .
 
 #once docker starts, what should it launch. Below we are
-# specifying to lanuch python and run piplein.py
+# specifying to lanuch python and run ingest_data.py
 # so that our pipeline is executed automatically 
 # as soon as docker is launched
-ENTRYPOINT ["python","pipeline.py"]
+ENTRYPOINT ["python","ingest_data.py"]

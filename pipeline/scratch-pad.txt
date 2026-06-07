@@ -1,0 +1,81 @@
+docker run -it --rm \
+  -e POSTGRES_USER="root" \
+  -e POSTGRES_PASSWORD="root" \
+  -e POSTGRES_DB="ny_taxi" \
+  -v ny_taxi_postgres_data:/var/lib/postgresql \ # assigning a volume (a docker volume)for db storgage which will be persistent
+  -p 5432:5432 \ # we are mapping port 5432 (LHS) which is inside container to port 5432 (RHS) which is on our locatl machine where I am running terminal. 
+  postgres:18 # this is postgres version we will be using
+
+  docker run -it --rm \
+  -e POSTGRES_USER="root" \
+  -e POSTGRES_PASSWORD="root" \
+  -e POSTGRES_DB="ny_taxi" \
+  -v ny_taxi_postgres_data:/var/lib/postgresql \
+  -p 5432:5432 \
+  postgres:18
+
+  docker run -it --rm\
+    taxi_ingest:v001 \
+    --pg-user=root \
+    --pg-pass=root \
+    --pg-host=pgdatabase \
+    --pg-port=5432 \
+    --pg-db=ny_taxi \
+    --target-table=yellow_taxi_trips_2021_2 \
+    --year=2021 \
+    --month=2 \
+    --chunksize=100000
+
+  #.... running postgre and taxi_ingest container under same network network
+
+# Run PostgreSQL on the network
+docker run -it \
+  -e POSTGRES_USER="root" \
+  -e POSTGRES_PASSWORD="root" \
+  -e POSTGRES_DB="ny_taxi" \
+  -v ny_taxi_postgres_data:/var/lib/postgresql \
+  -p 5432:5432 \
+  --network=pg-network \
+  --name pgdatabase \
+  postgres:18
+
+docker run -it \
+  --network=pg-network \
+  taxi_ingest:v001 \
+    --pg-user=root \
+    --pg-pass=root \
+    --pg-host=pgdatabase \
+    --pg-port=5432 \
+    --pg-db=ny_taxi \
+    --target-table=yellow_taxi_trips_2021_2 \
+    --year=2021 \
+    --month=2 \
+    --chunksize=100000
+
+# In another terminal, run pgAdmin on the same network
+docker run -it \
+  -e PGADMIN_DEFAULT_EMAIL="admin@admin.com" \
+  -e PGADMIN_DEFAULT_PASSWORD="root" \
+  -v pgadmin_data:/var/lib/pgadmin \
+  -p 8085:80 \
+  --network=pg-network \
+  --name pgadmin \
+  dpage/pgadmin4
+
+  # After combining pgdataase and pgadmin continers using docker compose file, and re-running it,
+  # now in order to ingest data pgdatabase, we need to specify the network name being 
+  # used by the docker compose by doing 'docker network ls' command. Usually the network name is
+  # pipeline_default
+
+  docker run -it \
+  --network=pipeline_default \
+  taxi_ingest:v001 \
+    --pg-user=root \
+    --pg-pass=root \
+    --pg-host=pgdatabase \
+    --pg-port=5432 \
+    --pg-db=ny_taxi \
+    --target-table=yellow_taxi_trips_2021_2 \
+    --year=2021 \
+    --month=2 \
+    --chunksize=100000
