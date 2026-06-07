@@ -1,0 +1,27 @@
+# base impage from which we want to build docker
+FROM python:3.13.11-slim
+
+# Copy uv binary from official uv image (multi-stage build pattern)
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/
+
+# specify a directory (or structure) in your docker, to be created
+WORKDIR /code
+# Add virtual environment to PATH so we can use installed packages
+ENV PATH="/code/.venv/bin:$PATH"
+
+# Copy dependency files first (better layer caching)
+COPY pyproject.toml uv.lock .python-version ./
+# Install dependencies from lock file (ensures reproducible builds)
+RUN uv sync --locked
+
+#specify anyting additional we want to install afre base image is installed
+#RUN pip install pandas pyarrow # We dont need to install these tools if using uv
+
+# here we are copying pipeline.py from our machine to docker root director (.)
+COPY pipeline.py .
+
+#once docker starts, what should it launch. Below we are
+# specifying to lanuch python and run piplein.py
+# so that our pipeline is executed automatically 
+# as soon as docker is launched
+ENTRYPOINT ["python","pipeline.py"]
